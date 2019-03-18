@@ -1,0 +1,41 @@
+function [cx_its] = average_iterates( iterates)
+%UNTITLED2 Summary of this function goes here
+%   
+% calcs an average from iterates
+
+dims=ndims(iterates);
+
+if dims == 3, alpha = abs(iterates(:,:,1));end
+if dims == 4, alpha = abs(iterates(:,:,:,1));end
+
+avg_its=alpha;
+
+max_its=alpha;
+
+for qq = 2:dims
+
+    if dims == 3, beta = abs(iterates(:,:,qq));end
+    if dims == 4, beta = abs(iterates(:,:,:,qq));end
+    
+    beta=check_conj_ref(alpha,beta);
+
+    %align just the amplitudes intiailly
+    %shift the alpha TO the beta
+    [h k l]=register_3d_reconstruction(abs(alpha),abs(beta));
+    
+    beta_s=((sub_pixel_shift((beta),h,k,l)));
+    
+    avg_its=avg_its+abs(beta_s;
+
+    max_its=max(max_its,beta_s);
+    
+    beta=[];
+    beta_s=[];
+    
+end
+
+avg_its=avg_its/dims;
+
+
+end
+

@@ -1,0 +1,79 @@
+function DLS_sum_from_dat
+%creates 3d tiff stacks by reading the .dat file from the scan output
+%produced at Diamond Light Source.  Just enter as many .dat files as
+%you like and it will search for the .tif file names then create a 3D tiff
+%stack (32bit) for each .dat file.
+%change the prefix to the constant part of the filename before the number
+%if the .tif file names are known (first and last) then use
+% data_sum2Dtiff3D.m instead.
+%%
+dat_f_nums=[30699,30703,30704,30707,30710,30711];
+
+dat_files={'30703.dat'};            %.dat file to extract file numbers from
+
+prefix='p100kImage';
+
+save_prefix='G33-C9-';                     %can specify a prefix for the output files
+accum=1;                            %accumulations per theta.  
+%%
+
+name_of_this_file='DLS_sum_from_dat';
+dir_file=which(name_of_this_file);    %finds the current folder 
+this_dir=dir_file(1:findstr(dir_file,name_of_this_file)-1);   %keep just the directory    
+save_dir=this_dir;
+
+save_dir=[save_dir,save_prefix];
+
+for qq = 1:size(dat_files)
+    
+    [first last] = DLS_extract_fnums(char(dat_files{qq}),prefix);   %get .tif file numbers
+    first=strtrim(first);
+    last=strtrim(last);
+    
+    aa=rdir(['**/*',first]);
+    bb=rdir(['**/*',last]);
+    first=aa.name;
+    last=bb.name;
+    
+    if qq == 1,files={first,last};else files=[files,{first,last}];end
+    
+end
+
+nfiles=size(files);             %get the number of files
+nfiles=max(nfiles);
+sets=nfiles/2;
+
+
+for qq = 1:2:nfiles
+    
+    disp('summing....')
+    one=char(files(qq));
+    two=char(files(qq+1));
+    file_load={one,two};
+    Tiff2D_2_Tiff3D( file_load,accum,save_dir)
+    
+    
+end
+
+
+
+end
+
+function names=create_fname_numb(prefix,suffix,numbers)
+
+nfiles=max(size(numbers));
+
+names='';
+
+for qq = 1:nfiles
+    name=[prefix,num2str(numbers(qq)),
+    names=
+    
+end
+
+
+
+
+end
+
+

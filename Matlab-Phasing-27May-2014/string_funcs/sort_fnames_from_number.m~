@@ -1,0 +1,16 @@
+function [ fnames ] = sort_fnames_from_number(fnames,string_prefix)
+%jclark
+%will sort the names from rdir output accorindg ti numbers in the string
+%put in a prefix to get the correct number
+
+n_files=size(fnames,1);
+
+for rr=1:n_temps,
+    numbs_init(rr)=extract_number_from_string(char(amp_fs(rr).name),[],string_prefix);
+end
+
+[BB IIX]=sort(numbs_init);
+
+
+end
+

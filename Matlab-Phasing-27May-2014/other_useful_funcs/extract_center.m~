@@ -1,0 +1,17 @@
+function new = extract_center(array,nx,ny,nz) 
+
+
+dims=ndims(array);
+
+if dims == 2, 
+    new=zeros(nx,ny);
+    [i,j]=[nx/2,ny/2]
+end
+
+if dims == 3, 
+    new=zeros(nx,ny,nz);
+    [i,j,k]=[nx/2,ny/2,nz/2];
+end
+
+end
+

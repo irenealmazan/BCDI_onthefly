@@ -1,0 +1,15 @@
+function [ cmap ] = green2white_cmap(nn)
+%jclark
+
+if exist('nn') ~
+nn=256;
+
+cmap=zeros([nn,3]);
+
+cmap(:,2)=1;  %green channel
+
+cmap(:
+
+
+end
+

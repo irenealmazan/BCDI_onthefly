@@ -1,0 +1,20 @@
+function [ pnpc ] = phase_projector(pn,params)
+%UNTITLED5 Summary of this function goes here
+%   Detailed explanation goes here
+
+phi_max=max(params.phase_range);
+phi_min=min(params.phase_rabge);
+
+phase=angle(pn);
+
+ind=( phase < phi_min);
+phase(ind)=phi_min;
+
+ind=( phase > phi_max);
+phase(ind)=phi_max;
+
+pnpc=abs(pn).*exp(i*phase);
+
+
+end
+

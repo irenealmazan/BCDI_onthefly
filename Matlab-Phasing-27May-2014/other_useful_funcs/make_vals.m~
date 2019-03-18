@@ -1,0 +1,9 @@
+function [ array ] = make_vals(n,maxv,minv)
+%jclark
+
+array=1:n; %
+array=array-min(array(:));
+array=array/max(array(:));
+
+end
+

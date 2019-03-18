@@ -1,0 +1,17 @@
+function [ pnh ] = hist_squared(pn,support)
+%UNTITLED4 Summary of this function goes here
+%   Detailed explanation goes here
+
+
+[h x]=hist(abs(pn(logical(support))));
+toth=sum(h(:));
+h=h.^2;
+h=h/sum(h(:))*toth;
+
+ind=histeq(abs(pn(logical(support))),h);
+
+amp=
+
+
+end
+

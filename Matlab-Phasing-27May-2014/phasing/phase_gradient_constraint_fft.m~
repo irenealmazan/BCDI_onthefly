@@ -1,0 +1,82 @@
+function constrained = phase_gradient_constraint_fft(pn,phx )
+%jclark
+
+dims=ndims(pn);
+
+expphi=exp(i*angle(pn));
+
+
+if dims == 2
+    
+    [fx hx fy hy] = phase_gradient_conv(expphi);
+
+    fx(abs(fx) >= phx) = phx; %constrain the gradient
+    
+    fy(abs(fy) >= phx) = phx; %constrain the gradient
+    
+    [dphidx h]= phase_gradient_x(expphi);
+    [dphidy h]= phase_gradient_y(expphi);
+    
+end
+
+
+
+
+
+end
+
+function [dphidx h]= phase_gradient_x(expphi,dxt)
+
+h=fspecial('sobel');
+sz=size(expphi);
+h=h/sum(abs(h(:)));
+if ndims(expphi) == 2
+    h=fftshift(fftn(fftshift(zero_pad_ver3(h',sz(2),sz(1)))));
+end
+if ndims(expphi) == 3
+    h=fftshift(fftn(fftshift(zero_pad_ver3(h',sz(2),sz(1),sz(3)))));
+end
+
+dphidx=fftshift(ifftn(fftshift(fftshift(fftn(fftshift(expphi))).*h)));
+
+
+end
+
+function [dphidy h] = phase_gradient_y(expphi)
+
+h=fspecial('sobel');
+sz=size(expphi);
+h=h/sum(abs(h(:)));
+if ndims(expphi) == 2
+    h=fftshift(fftn(fftshift(zero_pad_ver3(h,sz(2),sz(1)))));
+    
+end
+if ndims(expphi) == 3
+    h=fftshift(fftn(fftshift(zero_pad_ver3(h,sz(2),sz(1),sz(3)))));
+    
+end
+
+dphidy=fftshift(ifftn(fftshift(fftshift(fftn(fftshift(expphi))).*h)));
+
+
+
+end
+
+
+function dphidz = phase_gradient_z(expphi)
+
+h=fspecial('sobel');
+sz=size(expphi);
+
+if ndims(expphi) == 2
+    h=zero_pad_ver3(h',sz(2),sz(1));
+end
+if ndims(expphi) == 3
+    h=zero_pad_ver3(h',sz(2),sz(1),sz(3));
+end
+
+dphidy=fftshift(fftn(fftshift(expphi.*h)));
+
+
+
+end

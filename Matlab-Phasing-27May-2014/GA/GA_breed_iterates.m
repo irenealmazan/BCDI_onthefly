@@ -1,0 +1,287 @@
+function [ pn_g ] = GA_breed_iterates(pn_g,chi,params,best)
+
+%breeds iterates based on selection criteria
+%assume chi is array of chi values
+%pn_g is the population of iterates
+val=0;
+dims=ndims(pn_g);
+npop=size(pn_g,dims);
+
+
+%get the alpha male
+ind=find(chi == min(chi(:)));
+if dims == 3, alpha=pn_g(:,:,ind);end
+if dims == 4, alpha=pn_g(:,:,:,ind);end
+
+
+try
+    breed_mode=params.breed_mode;
+catch
+    breed_mode='sqrt';
+end
+
+switch breed_mode    
+    case {'avg_amp'}
+        aligned=align_iterates(pn_g,ind);
+        ph_alpha=atan2(imag(aligned(:,:,ind)),real(aligned(:,:,ind)));
+        %alpha=mean(abs(aligned),3).*exp(i*ph_alpha);
+        alpha=1;
+        for qq=1:npop,alpha=alpha.*abs(aligned(:,:,qq));end
+        alpha=alpha.^(1/npop).*exp(i*ph_alpha);
+    case {'max_amp'}
+        aligned=align_iterates(pn_g,ind);
+        ph_alpha=atan2(imag(aligned(:,:,ind)),real(aligned(:,:,ind)));
+        alpha=max(abs(aligned),[],3).*exp(i*ph_alpha);
+    case {'avg_phase'}        
+        aligned=align_iterates(pn_g,ind);
+        ph_alpha=mean(atan2(imag(aligned),real(aligned)),3);
+        alpha=max(abs(aligned),[],3).*exp(i*ph_alpha);
+    case {'sqrt_phase'}
+        val=pi;
+end
+
+%check if we shuld use the best that was passed in
+switch breed_mode    
+    case {'sqrt_best','sqrt_alpha_best','max_val_best','max_val_phase_best','max_val_ag_best','max_val_alpha_best'}
+        alpha=best;
+        disp('**USING GLOBAL BEST AS ALPHA**')
+end
+    
+%get the gamma male, the second best
+chi_g=chi;%
+chi_g(ind)=max(chi(:)); %do this to get the second one
+ind_g=find(chi_g == min(chi_g(:)));
+if dims == 3, gamma=pn_g(:,:,ind_g);end
+if dims == 4, gamma=pn_g(:,:,:,ind_g);end
+ph_gamma=atan2(imag(gamma),real(gamma));
+
+
+alpha_avg=0;
+
+do_phase=1;    %average with phase as well
+
+if do_phase == 1
+    alpha=zero_phase(alpha,val);            
+end
+
+for qq=1:npop
+    
+    if dims == 3, beta=pn_g(:,:,qq);end
+    if dims == 4, beta=pn_g(:,:,:,qq);end
+    
+    if qq == 1,max_amp=max(abs(pn_g),[],3);end
+    
+    if qq ~= ind
+        
+        
+        if do_phase == 1
+            beta=zero_phase(beta,val);            
+        end
+        
+        ph_beta=atan2(imag(beta),real(beta));
+
+        %align just the amplitudes intiailly
+        %shift the alpha TO the beta
+        %check the conj reflection
+        
+        alpha=check_conj_ref(beta,alpha);
+        
+        [h k l]=register_3d_reconstruction(abs(beta),abs(alpha));
+        
+        if do_phase == 0            
+            alpha_s=abs(real(sub_pixel_shift(abs(alpha),h,k,l)));
+        else
+            alpha_s=zero_phase((sub_pixel_shift(alpha,h,k,l)),val);
+            ph_alpha=atan2(imag(alpha_s),real(alpha_s));
+        end
+        
+        switch breed_mode
+
+            case {'sqrt','sqrt_best'}
+                if do_phase == 1,beta_t=sqrt(alpha_s.*abs(beta)).*exp(i*(0.5*ph_beta+0.5*ph_alpha));end
+                if do_phase == 0,beta_t=sqrt(alpha_s.*abs(beta)).*exp(i*ph_beta);end
+            case {'sqrt_alpha','sqrt_alpha_best'}
+                if do_phase == 1,beta_t=(abs(gamma).*alpha_s.*abs(beta)).^(1/3).*exp(i*ph_alpha);end
+                if do_phase == 0,beta_t=sqrt(alpha_s.*abs(beta)).*exp(i*ph_beta);end
+            case {'max_val','max_val_best'}
+                if do_phase == 1,beta_t=max(alpha_s,abs(beta)).*exp(i*(0.5*ph_beta+0.5*ph_alpha));end %beta_t=max(alpha_s,abs(beta)).*exp(i*(0.5*ph_beta+0.5*ph_alpha));  %beta_t=max(alpha_s,abs(beta)).*exp(i*max(ph_beta,ph_alpha));end%
+                if do_phase == 0,beta_t=max(alpha_s,abs(beta)).*exp(i*ph_beta);end
+            case {'max_val_phase','max_val_phase_best'}
+                if do_phase == 1,beta_t=max(alpha_s,abs(beta)).*exp(i*(ph_alpha));end %beta_t=max(alpha_s,abs(beta)).*exp(i*(0.5*ph_beta+0.5*ph_alpha));  %beta_t=max(alpha_s,abs(beta)).*exp(i*max(ph_beta,ph_alpha));end%
+                if do_phase == 0,beta_t=max(alpha_s,abs(beta)).*exp(i*ph_beta);end
+            case {'max_val_ag','max_val_ag_best'}
+                max_phase=(ph_alpha+ph_beta)/2.0;%
+                if do_phase == 1,beta_t=max(max(alpha_s,abs(beta)),abs(gamma)).*exp(i*max_phase);end 
+                if do_phase == 0,beta_t=max(max(alpha_s,abs(beta)),abs(gamma)).*exp(i*ph_beta);end
+            
+            case {'max_val_alpha','max_val_alpha_best'}
+                max_phase=(ph_alpha);
+                if do_phase == 1,beta_t=max(max(alpha_s,abs(beta)),abs(gamma)).*exp(i*max_phase);end 
+                if do_phase == 0,beta_t=max(max(alpha_s,abs(beta)),abs(gamma)).*exp(i*ph_beta);end
+            
+            case {'avg_amp','max_amp'}
+                beta_t=abs(alpha_s).*exp(i*(ph_beta+ph_alpha)/2.0);
+                
+            case {'avg_phase'}
+                max_phase=(ph_alpha.*ph_beta).^.5;%
+                beta_t=max(max(alpha_s,abs(beta)),abs(gamma)).*exp(i*max_phase);
+            
+            case {'harmonic'}
+                max_phase=(ph_alpha);
+                one=zeros(size(beta));
+                two=zeros(size(beta));
+                three=zeros(size(beta));
+                four=three;
+                five=four;
+                
+                one(abs(alpha_s) ~= 0)=1./abs(alpha_s(abs(alpha_s) ~= 0));
+                two(abs(gamma) ~= 0)=1./abs(gamma(abs(gamma) ~= 0));
+                three(abs(beta) ~= 0)=1./abs(beta(abs(beta) ~= 0));
+                
+                four=one+two+three;
+                five( four ~= 0)=1./four(four ~= 0)*3;
+                
+                
+                beta_t=five.*exp(i*max_phase);
+                one=0;
+                two=0;
+                three=0;
+                four=0;
+                
+        end
+        
+
+        if dims == 3, pn_g(:,:,qq)=beta_t;end
+        if dims == 4, pn_g(:,:,:,qq)=beta_t;end
+
+        beta=[];
+        beta_t=[];
+        ph_beta=[];
+        alpha_s=[];
+ 
+    end
+        
+end
+
+
+
+beta=[];
+beta_t=[];
+ph_beta=[];
+alpha_s=[];
+max_amp=[];
+
+end
+
+function pn=zero_phase(pn,val)
+
+try
+    val;
+catch
+    val=0;
+end
+
+ph=atan2(imag(pn),real(pn));
+
+SS=shrink_wrap(abs(pn),.2,.5);  %get just the crystal, i.e very tight support
+avg_ph=mean(ph(find(SS > 0)));
+ph=ph-avg_ph+val;
+
+pn=abs(pn).*exp(i*ph);
+
+
+end
+
+function pn=remove_ramp(pn)
+
+amp=abs(pn);
+ph=atan2(imag(pn),real(pn));
+
+F0=ifftshift(fftn(fftshift(amp)));
+F1=ifftshift(fftn(fftshift(amp.*exp(i*ph))));
+[h k l]=register_3d_reconstruction(abs(F0),abs(F1));
+pn=ifftshift(ifftn(fftshift(sub_pixel_shift(F1,h,k,l))));
+
+end
+
+function pn=check_conj_ref(ref,pn)
+
+cnj_rf=is_conj_ref(abs(ref),abs(pn));
+            
+if cnj_rf ~=0,pn=conj_reflect(pn);end
+
+end
+
+function cnj_rf=is_conj_ref(a,b)
+
+%c1=cross_correlation(shrink_wrap(a,.1,.1),shrink_wrap(conj_reflect(b),.1,.1));
+%c2=cross_correlation(shrink_wrap(a,.1,.1),shrink_wrap(b,.1,.1));
+
+c1=cross_correlation(a,b);
+c2=cross_correlation(a,b);
+
+
+c1=max(c1(:));
+c2=max(c2(:));
+
+if c1 > c2,cnj_rf=1;else cnj_rf=0;end
+
+
+end
+
+function [shifted]=sub_pixel_shift(array,row_shift,col_shift,z_shift)
+
+    buf2ft=fftn(array);
+    [nr,nc,nz]=size(buf2ft);
+    Nr = ifftshift([-fix(nr/2):ceil(nr/2)-1]);
+    Nc = ifftshift([-fix(nc/2):ceil(nc/2)-1]);
+    Nz = ifftshift([-fix(nz/2):ceil(nz/2)-1]);
+    [Nc,Nr,Nz] = meshgrid(Nc,Nr,Nz);
+    Greg = buf2ft.*exp(i*2*pi*(-row_shift*Nr/nr-col_shift*Nc/nc-z_shift*Nz/nz));
+    %Greg = Greg*exp(i*diffphase);
+    shifted=ifftn(Greg);
+
+end
+
+% 
+% %take the ramp off and 'zero' the phase
+%         if rem_ramp == 1
+%             F0=ifftshift(fftn(fftshift(amp)));
+%             F1=ifftshift(fftn(fftshift(amp.*exp(i*ph))));
+%             [h k l]=register_3d_reconstruction(abs(F0),abs(F1));
+%             crystal=ifftshift(ifftn(fftshift(sub_pixel_shift(F1,h,k,l))));
+%             amp=abs(crystal);
+%             ph=atan2(imag(crystal),real(crystal));
+%             
+%             SS=shrink_wrap(amp,.3,.5);  %get just the crystal, i.e very tight support
+%             avg_ph=mean(ph(find(SS > 0)));
+%             ph=ph-avg_ph;
+%         end
+%         
+%         if qq == 1,
+%             big_arr=zeros([size(amp),nfiles]);
+%             big_ph=big_arr;
+%             ref=amp;    %reference one
+%             big_arr(:,:,:,qq)=amp;    %save them (after checking for cnj)
+%             big_ph(:,:,:,qq)=ph;
+%         end
+%         if qq > 1
+%             cnj_rf=is_conj_ref(ref,amp);
+%             
+%             if cnj_rf ~=0,crystal=conj_reflect(amp.*exp(i*ph));else
+%                 crystal=(amp.*exp(i*ph));end
+%             
+%             amp=abs(crystal);
+%             
+%             [h k l]=register_3d_reconstruction(ref,amp);
+% 
+%             next_c=(sub_pixel_shift(crystal,h,k,l));
+%             next=abs(next_c);
+%             next_ph=atan2(imag(next_c),real(next_c));
+%             %next=real(sub_pixel_shift(amp,h,k,l));
+%             %next_ph=real(sub_pixel_shift(ph,h,k,l));
+% 
+%             big_arr(:,:,:,qq)=next;    %save them (after checking for cnj)
+%         
+%             big_ph(:,:,:,qq)=next_ph;
+%         end

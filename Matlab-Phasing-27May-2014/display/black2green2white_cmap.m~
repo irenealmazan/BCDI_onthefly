@@ -1,0 +1,23 @@
+function [ cmap ] = black2green2white_cmap()
+%jclark
+
+%if exist('nn') ~= 1,nn=256;end
+
+cmap=zeros([256,3]);
+
+%r 1 -> 0 -> 0
+%g 1 -> 1 -> 0
+%b 1 -> 0 -> 0
+
+ind1=(1:85);
+ind2=(86:170);
+ind3=(171:256);
+
+cmap(ind1,1)=ind1;
+
+cmap(1:(nn/2),1)=(1:nn)/nn;
+
+cmap(:,3)=(1:nn)/nn;
+
+
+end

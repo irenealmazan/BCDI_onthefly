@@ -1,0 +1,29 @@
+function [ Tarray ] = det_to_lab(pn,delta,gamma,Nx,Ny,Nt,dpx,dpy,dt,arm )
+%UNTITLED6 Summary of this function goes here
+%   Detailed explanation goes here
+
+sz=size(pn);
+Nx=sz(2);
+Ny=sz(1);
+Nt=sz(3);
+
+%T=transform_matrix(delta,gamma,Nx,Ny,Nt,dpx,dpy,dt,arm);
+%T=rotation_matrix3d(delta,gamma,0);
+
+T=[cos(delta) 0 -sin(delta) 0;0 1 0 0;sin(theta) 0 cos(theta) 0;0 0 0 1];
+
+tform=maketform('affine',T);
+
+R=makeresampler('linear','fill');
+
+tdims_a=[1 2 3];
+tdims_b=[1 2 3];
+tsize_b=[2*Ny 2*Nx 2*Nt];
+tmap_b=[];
+F=0;
+
+Tarray=tformarray(pn,tform,R,tdims_a,tdims_b,tsize_b,tmap_b,F);
+
+
+end
+

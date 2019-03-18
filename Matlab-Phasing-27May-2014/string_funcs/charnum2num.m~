@@ -1,0 +1,18 @@
+function [ num ] = charnum2num( cellnum )
+%jclark
+%takes a cell array with numbers (stored as strings)
+%and turns it into a num array
+
+n_ele=max(size(cellnum));
+num=0;
+
+for qq=1:n_ele
+    
+   num(qq)= double(cellnum{qq});
+    
+end
+
+
+
+end
+

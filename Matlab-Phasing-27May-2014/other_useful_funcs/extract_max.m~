@@ -1,0 +1,39 @@
+function [ new ] = extract_max( array,nx,ny,nz )
+%cuts out an array of size nxmny centered arond the max value
+%   Detailed explanation goes here
+
+
+
+dims=ndims(array);
+
+if dims == 2, 
+    new=zeros(nx,ny);
+    [i,j]=ind2sub(size(array),find( abs(array) == max(max(max(abs(array))))));
+end
+
+if dims == 3, 
+    new=zeros(nx,ny,nz);
+    [i,j,k]=ind2sub(size(array),find( abs(array) == max(max(max(abs(array))))));
+end
+
+xyz=center_of_mass(abs(array));     %calc com 
+
+if sum(abs(xyz-[j,i,k])) >= nx/2, disp('WARNING - com and max val disagree....'),end
+
+
+if dims == 2
+
+    if mod(nx,2) == 1,new=array(i-(ny-1)/2:i+(ny-1)/2,j-(nx-1)/2:j+(nx-1)/2);end
+    if mod(nx,2) == 0,new=array(i-(ny)/2:i+(ny)/2-1,j-(nx)/2:j+(nx)/2-1);end
+end
+
+if dims == 3
+
+    if mod(nx,2) == 1,new=array(i-(ny-1)/2:i+(ny-1)/2,j-(nx-1)/2:j+(nx-1)/2,k-(nz-1)/2:k+(nz-1)/2);end
+    if mod(nx,2) == 0,new=array(i-(ny)/2:i+(ny)/2-1,j-(nx)/2:j+(nx)/2-1,k-(nz)/2:k+(nz)/2-1);end
+end
+
+
+
+end
+
