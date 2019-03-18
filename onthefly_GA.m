@@ -1,9 +1,9 @@
 %% do GA on the fly
 clear all; close all; clc;
 
-addpath(genpath('/Users/ialmazn/Box Sync/forIrene/Matlab-Phasing-27May-2014'));
-addpath('/Users/ialmazn/Box Sync/forIrene/openspec-1.4/');
-addpath(genpath('/Users/ialmazn/Documents/MATLAB/ptycho/m_scripts/'))
+addpath(genpath('./Matlab-Phasing-27May-2014'));
+addpath(genpath('./openspec-1.4'));
+addpath(genpath('./m_scripts'));
 
 %load('data_file2.mat');
 

@@ -1,4 +1,4 @@
-function r = random(name,varargin)
+function r = random_copy(name,varargin)
 %RANDOM Generate random arrays from a specified distribution.
 %   R = RANDOM(NAME,A) returns an array of random numbers chosen from the
 %   one-parameter probability distribution specified by NAME with parameter
